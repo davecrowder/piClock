@@ -7,7 +7,7 @@
 <li>Change the brightness of the display in incremental steps</li>
 </ul>
 <p>The program can be initiated on boot with the following entry in <code>/lib/systemd/system/piClock.service</code>:
-<figure><pre><code>
+<figure><pre>
 [Unit]
 Description=piClock Service
 After=multi-user.target
@@ -18,7 +18,7 @@ ExecStart=/home/dave/projects/piClock/target/debug/piClock &>> /home/dave/piCloc
 
 [Install]
 WantedBy=multi-user.target
-</code></pre></figure>
+</pre></figure>
 <p>where the ExecStart parameter points to the appropriate executable.  Then, before rebooting, enter the commands:
 <figure>
     <pre>
