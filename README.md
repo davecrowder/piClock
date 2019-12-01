@@ -14,11 +14,9 @@
 [Unit]
 Description=piClock Service
 After=multi-user.target
-
 [Service]
 Type=idle
 ExecStart=/home/dave/projects/piClock/target/debug/piClock &>> /home/dave/piClock-daemon.output
-
 [Install]*
 WantedBy=multi-user.target
     </code></pre>
