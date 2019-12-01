@@ -11,8 +11,7 @@
 
 <figure>
     <pre>
-        <code>
-[Unit]
+<code>[Unit]
 Description=piClock Service
 After=multi-user.target
 
@@ -21,8 +20,7 @@ Type=idle
 ExecStart=/home/dave/projects/piClock/target/debug/piClock &>> /home/dave/piClock-daemon.output
 
 [Install]
-WantedBy=multi-user.target
-        </code>
+WantedBy=multi-user.target</code>
     </pre>
 </figure>
 <p>where the ExecStart parameter points to the appropriate executable.  Then, before rebooting, enter the commands:
