@@ -6,3 +6,21 @@
 <li>Change the orientation of the display (normal or inverted)</li>
 <li>Change the brightness of the display in incremental steps</li>
 </ul>
+<p>The program can be initiated on boot with the following entry in <code>/lib/systemd/system/piClock.service</code>:
+<code>
+[Unit]
+Description=piClock Service
+After=multi-user.target
+
+[Service]
+Type=idle
+ExecStart=/home/dave/projects/piClock/target/debug/piClock &>> /home/dave/piClock-daemon.output
+
+[Install]
+WantedBy=multi-user.target
+</code>
+where the ExecStart parameter points to the appropriate executable.  Then, before rebooting, enter the commands:
+<code>
+sudo systemctl daemon-reload
+sudo systemctl enable piClock.service
+</code>
