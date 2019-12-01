@@ -4,5 +4,5 @@
 <p>The program displays the time in the format "hh-mm-ss" and uses the two buttons on the ZeroSeg board to allow the user to:
 <ul>
 <li>Change the orientation of the display (normal or inverted)</li>
-<li>Change the brightness of the disoplay in incremental steps</li>
+<li>Change the brightness of the display in incremental steps</li>
 </ul>
