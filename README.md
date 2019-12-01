@@ -18,11 +18,7 @@ ExecStart=/home/dave/projects/piClock/target/debug/piClock &>> /home/dave/piCloc
 WantedBy=multi-user.target
 </pre></figure>
 <p>where the ExecStart parameter points to the appropriate executable.  Then, before rebooting, enter the commands:
-<figure>
-    <pre>
-        <code>
+<figure><pre>
 sudo systemctl daemon-reload
 sudo systemctl enable piClock.service
-        </code>
-    </pre>
-</figure>
+</pre></figure>
