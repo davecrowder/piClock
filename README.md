@@ -8,6 +8,10 @@
 </ul>
 <p>The program can be initiated on boot with the following entry in <code>/lib/systemd/system/piClock.service</code>:
 <code>
+
+<figure>
+    <pre>
+        <code>
 [Unit]
 Description=piClock Service
 After=multi-user.target
@@ -18,9 +22,15 @@ ExecStart=/home/dave/projects/piClock/target/debug/piClock &>> /home/dave/piCloc
 
 [Install]
 WantedBy=multi-user.target
-</code>
-where the ExecStart parameter points to the appropriate executable.  Then, before rebooting, enter the commands:
-<code>
+        </code>
+    </pre>
+</figure>
+<p>where the ExecStart parameter points to the appropriate executable.  Then, before rebooting, enter the commands:
+<figure>
+    <pre>
+        <code>
 sudo systemctl daemon-reload
 sudo systemctl enable piClock.service
-</code>
+        </code>
+    </pre>
+</figure>
