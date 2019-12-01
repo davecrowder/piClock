@@ -1,18 +1,21 @@
+//
+// Program to display a clock on the ZeroSeg display board mounted on a Raspberry Pi Zero W.
+//
 use std::time::Duration;
 use std::thread::{sleep, spawn};
 use std::sync::mpsc::{channel, Sender};
-// use std::convert::TryInto;
 use chrono::prelude::*;
 use rppal::spi::{Bus, Mode, SlaveSelect, Spi};
 use rppal::gpio::{Gpio, Level, Trigger};
-// use rppal::spi::*;
 
 fn main() {
-    // Open the SPI bus.
+    // Open the SPI bus to communicate with the attached MAX7219CNG display driver.
     let mut display = Spi::new(Bus::Spi0, SlaveSelect::Ss0, 10_000_000, Mode::Mode0)
         .expect("Failed to create Spi object.");
     
-    // Create a messaging channel for the non-blocking write to SPI bus.
+    // Create a messaging channel for the non-blocking write to SPI bus.  This is
+    //  created so that the sending of data to the display can be queued and so
+    //  is effectively non-blocking for the main process.
     let (display_tx, display_rx) = channel();
 
     // Spawn a process to accept display commands and dispatch
@@ -26,6 +29,8 @@ fn main() {
     });
 
     // Initialise the display device.
+    // Sets parameters for the MAX7219CNG and initialises display options for
+    //  the program.
     let mut display_inverted = true;
     let mut display_intensity = 7; 
     display_tx.send((0x9, 0x00)).unwrap(); // Disable decode mode for all digits.
@@ -37,12 +42,14 @@ fn main() {
 
 
     // Create a messaging channel for main event handler and clone it for each sender.
-    let (main_tx, main_rx) = channel();
-    let main_tx_switch1 = Sender::clone(&main_tx);
-    let main_tx_switch2 = Sender::clone(&main_tx);
+    let (main_tx, main_rx) = channel();             // 1 second "interrupt".
+    let main_tx_switch1 = Sender::clone(&main_tx);  // Switch 1 event.
+    let main_tx_switch2 = Sender::clone(&main_tx);  // Switch 2 event.
 
 
     // Initialise buttons.
+    // Buttons will send a message to the main routine when the appropriate
+    //  interrupt is detected.
     let mut switch1 = Gpio::new().unwrap().get(17).unwrap().into_input();
     switch1.set_async_interrupt(Trigger::FallingEdge, move |level| {
         main_tx_switch1.send(MainMessage::ButtonChange(1, level)).unwrap();
@@ -54,7 +61,9 @@ fn main() {
         }).unwrap();
      
 
-
+    // Initiate the 1 second "interrupt" routine.  This is the "pendulum"
+    //  of the program.  It sends a message to the main routine whenever a
+    //  second completes.
     spawn(move || {
         loop {
             let dt = Local::now();
@@ -88,7 +97,11 @@ fn main() {
     }
 }
 
-fn disp_time(display_tx: &std::sync::mpsc::Sender<(u8, u8)>, display_inverted: bool) {
+// Function to display the current local time in hh-mm-ss format.  The digits are displayed by
+//  sending commands to the specified output queue.  The display can be inverted to deal with
+//  its orientation when installed.
+fn disp_time(display_tx: &std::sync::mpsc::Sender<(u8, u8)>,
+        display_inverted: bool) {
     let dt = Local::now();
     let hour_high: u8 = (dt.hour() / 10) as u8;
     let hour_low: u8 = (dt.hour() % 10) as u8;
@@ -117,6 +130,9 @@ fn disp_time(display_tx: &std::sync::mpsc::Sender<(u8, u8)>, display_inverted: b
     }
 }
 
+// Function to convert a decimal digit from a u8 specifying its absolute value, to a u8 bitmap
+//  indicating the segments to be lit for passing to a seven-segment display.  The returned
+//  value can also be "inverted" depending on required display orientation.
 fn decode_digit(digit: u8, orientation: DigitOrientation, dp: bool) -> u8 {
     let mut return_value = 0;
     match orientation {
