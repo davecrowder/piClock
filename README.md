@@ -10,12 +10,10 @@
 <figure><pre>
 [Unit]
 Description=piClock Service
-After=multi-user.target
-<br>
+After=multi-user.target<br>
 [Service]
 Type=idle
-ExecStart=/home/dave/projects/piClock/target/debug/piClock &>> /home/dave/piClock-daemon.output
-<br>
+ExecStart=/home/dave/projects/piClock/target/debug/piClock &>> /home/dave/piClock-daemon.output<br>
 [Install]
 WantedBy=multi-user.target
 </pre></figure>
