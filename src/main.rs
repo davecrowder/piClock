@@ -31,7 +31,7 @@ fn main() {
     // Initialise the display device.
     // Sets parameters for the MAX7219CNG and initialises display options for
     //  the program.
-    let mut display_inverted = true;
+    let mut disp_mode = DisplayMode::InvertedHhMmSs;
     let mut display_intensity = 7; 
     display_tx.send((0x9, 0x00)).unwrap(); // Disable decode mode for all digits.
     display_tx.send((0xA, display_intensity)).unwrap();  // Set intensity.
@@ -73,20 +73,28 @@ fn main() {
         }
     });
 
+    // Main program loop.  Waits for incoming messages from either:
+    //  - Switch 1
+    //  - Switch 2
+    //  - Pendulum process (one second)
     for main_message in main_rx {
         match main_message {
             MainMessage::TimeSignal => {
-                disp_time(&display_tx, display_inverted);
+                disp_time(&display_tx, &disp_mode);
             }
             MainMessage::ButtonChange(switch, _level) => {
-                // println!("Switch {} went {}", switch, level);
                 if switch == 1 {
-                    if display_inverted {
-                        display_inverted = false;
-                    } else {
-                        display_inverted = true;
+                    match disp_mode {
+                        DisplayMode::InvertedHhMmSs => {
+                            disp_mode = DisplayMode::NormalHhMmSs;
+                        },
+                        DisplayMode::NormalHhMmSs => {
+                            disp_mode = DisplayMode::InvertedHhMmSs;
+                        },
+                        // _ => {
+                        // },
                     }
-                    disp_time(&display_tx, display_inverted);
+                    disp_time(&display_tx, &disp_mode);
                 } else {
                     display_intensity = (display_intensity + 1) % 16;
                     display_tx.send((0xA, display_intensity)).unwrap();  // Set intensity.
@@ -100,33 +108,31 @@ fn main() {
 // Function to display the current local time in hh-mm-ss format.  The digits are displayed by
 //  sending commands to the specified output queue.  The display can be inverted to deal with
 //  its orientation when installed.
-fn disp_time(display_tx: &std::sync::mpsc::Sender<(u8, u8)>,
-        display_inverted: bool) {
+fn disp_time(display_tx: &std::sync::mpsc::Sender<(u8, u8)>, display_mode: &DisplayMode) {
     let dt = Local::now();
-    let hour_high: u8 = (dt.hour() / 10) as u8;
-    let hour_low: u8 = (dt.hour() % 10) as u8;
-    let minute_high: u8 = (dt.minute() /10) as u8;
-    let minute_low: u8 = (dt.minute() % 10) as u8;
-    let second_high: u8 = (dt.second() / 10) as u8;
-    let second_low: u8 = (dt.second() % 10) as u8;        
-    if display_inverted {
-        display_tx.send((0x8, decode_digit(second_low, DigitOrientation::Inverted, false))).unwrap();
-        display_tx.send((0x7, decode_digit(second_high, DigitOrientation::Inverted, false))).unwrap();
-        display_tx.send((0x6, 0x1)).unwrap();
-        display_tx.send((0x5, decode_digit(minute_low, DigitOrientation::Inverted, false))).unwrap();
-        display_tx.send((0x4, decode_digit(minute_high, DigitOrientation::Inverted, false))).unwrap();
-        display_tx.send((0x3, 0x1)).unwrap();
-        display_tx.send((0x2, decode_digit(hour_low, DigitOrientation::Inverted, false))).unwrap();
-        display_tx.send((0x1, decode_digit(hour_high, DigitOrientation::Inverted, false))).unwrap();
-    } else {
-        display_tx.send((0x1, decode_digit(second_low, DigitOrientation::Normal, false))).unwrap();
-        display_tx.send((0x2, decode_digit(second_high, DigitOrientation::Normal, false))).unwrap();
-        display_tx.send((0x3, 0x1)).unwrap();
-        display_tx.send((0x4, decode_digit(minute_low, DigitOrientation::Normal, false))).unwrap();
-        display_tx.send((0x5, decode_digit(minute_high, DigitOrientation::Normal, false))).unwrap();
-        display_tx.send((0x6, 0x1)).unwrap();
-        display_tx.send((0x7, decode_digit(hour_low, DigitOrientation::Normal, false))).unwrap();
-        display_tx.send((0x8, decode_digit(hour_high, DigitOrientation::Normal, false))).unwrap();
+    match display_mode {
+        DisplayMode::InvertedHhMmSs => {    
+            display_tx.send((0x8, decode_digit((dt.second() % 10) as u8, DigitOrientation::Inverted, false))).unwrap(); // Low second
+            display_tx.send((0x7, decode_digit((dt.second() / 10) as u8, DigitOrientation::Inverted, false))).unwrap(); // High second
+            display_tx.send((0x6, 0x1)).unwrap();
+            display_tx.send((0x5, decode_digit((dt.minute() % 10) as u8, DigitOrientation::Inverted, false))).unwrap();       // Low minute
+            display_tx.send((0x4, decode_digit((dt.minute() /10) as u8, DigitOrientation::Inverted, false))).unwrap();  // High minute
+            display_tx.send((0x3, 0x1)).unwrap();
+            display_tx.send((0x2, decode_digit((dt.hour() % 10) as u8, DigitOrientation::Inverted, false))).unwrap();   // Low hour
+            display_tx.send((0x1, decode_digit((dt.hour() / 10) as u8, DigitOrientation::Inverted, false))).unwrap();   // High hour
+        },
+        DisplayMode::NormalHhMmSs => {
+            display_tx.send((0x1, decode_digit((dt.second() % 10) as u8, DigitOrientation::Normal, false))).unwrap(); // Low second
+            display_tx.send((0x2, decode_digit((dt.second() / 10) as u8, DigitOrientation::Normal, false))).unwrap(); // High second
+            display_tx.send((0x3, 0x1)).unwrap();
+            display_tx.send((0x4, decode_digit((dt.minute() % 10) as u8, DigitOrientation::Normal, false))).unwrap();       // Low minute
+            display_tx.send((0x5, decode_digit((dt.minute() /10) as u8, DigitOrientation::Normal, false))).unwrap();  // High minute
+            display_tx.send((0x6, 0x1)).unwrap();
+            display_tx.send((0x7, decode_digit((dt.hour() % 10) as u8, DigitOrientation::Normal, false))).unwrap();   // Low hour
+            display_tx.send((0x8, decode_digit((dt.hour() / 10) as u8, DigitOrientation::Normal, false))).unwrap();   // High hour
+        }
+        // _ => {
+        // }
     }
 }
 
@@ -222,8 +228,16 @@ enum DigitOrientation {
     Inverted,
 }
 
-
 enum MainMessage {
     TimeSignal,
     ButtonChange(u8, Level),
 }
+
+enum DisplayMode {
+    InvertedHhMmSs,
+    NormalHhMmSs,
+//    inverted_countdown_secs(TimeZone),
+//    normal_countdown_secs(TimeZone),
+}
+
+// let tt = TimeZone::ymd(2019, 12, 10).and_hms(0, 0, 0);
