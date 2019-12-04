@@ -1,0 +1,10 @@
+To-Do List
+==========
+Implement countdown timer.
+Implement switch de-bounce.
+
+
+Ideas
+=====
+Web interface for dsetailed configuraqtion.
+Bluetooth connection for initial setup (apply SSID).

@@ -41,6 +41,10 @@ fn main() {
 
 
 
+    let target_time = Local::now();
+
+
+
     // Create a messaging channel for main event handler and clone it for each sender.
     let (main_tx, main_rx) = channel();             // 1 second "interrupt".
     let main_tx_switch1 = Sender::clone(&main_tx);  // Switch 1 event.
@@ -63,7 +67,7 @@ fn main() {
 
     // Initiate the 1 second "interrupt" routine.  This is the "pendulum"
     //  of the program.  It sends a message to the main routine whenever a
-    //  second completes.
+    //  second has elapsed.
     spawn(move || {
         loop {
             let dt = Local::now();
@@ -89,10 +93,14 @@ fn main() {
                             disp_mode = DisplayMode::NormalHhMmSs;
                         },
                         DisplayMode::NormalHhMmSs => {
-                            disp_mode = DisplayMode::InvertedHhMmSs;
+                            disp_mode = DisplayMode::InvertedCountdownSss(&target_time);
                         },
-                        // _ => {
-                        // },
+                        DisplayMode::InvertedCoundownSss(_) => {
+                            disp_mode = DisplayMode::NormalCountdownSss(&target_time);
+                        },
+                        DisplayMode::NormalCountdownSss(_) => {
+                            disp_mode = DisplayMode::InvertedHhMmSs;
+                        }
                     }
                     disp_time(&display_tx, &disp_mode);
                 } else {
@@ -131,8 +139,8 @@ fn disp_time(display_tx: &std::sync::mpsc::Sender<(u8, u8)>, display_mode: &Disp
             display_tx.send((0x7, decode_digit((dt.hour() % 10) as u8, DigitOrientation::Normal, false))).unwrap();   // Low hour
             display_tx.send((0x8, decode_digit((dt.hour() / 10) as u8, DigitOrientation::Normal, false))).unwrap();   // High hour
         }
-        // _ => {
-        // }
+        _ => {
+        }
     }
 }
 
@@ -236,8 +244,8 @@ enum MainMessage {
 enum DisplayMode {
     InvertedHhMmSs,
     NormalHhMmSs,
-//    inverted_countdown_secs(TimeZone),
-//    normal_countdown_secs(TimeZone),
+    InvertedCountdownSss(chrono::DateTime),
+    NormalCountdownSss(chrono::DateTime),
 }
 
 // let tt = TimeZone::ymd(2019, 12, 10).and_hms(0, 0, 0);
