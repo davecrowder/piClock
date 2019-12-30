@@ -93,12 +93,12 @@ fn main() {
                             disp_mode = DisplayMode::NormalHhMmSs;
                         },
                         DisplayMode::NormalHhMmSs => {
-                            disp_mode = DisplayMode::InvertedCountdownSss(&target_time);
+                            disp_mode = DisplayMode::InvertedCountdownSss;
                         },
-                        DisplayMode::InvertedCoundownSss(_) => {
-                            disp_mode = DisplayMode::NormalCountdownSss(&target_time);
+                        DisplayMode::InvertedCountdownSss => {
+                            disp_mode = DisplayMode::NormalCountdownSss;
                         },
-                        DisplayMode::NormalCountdownSss(_) => {
+                        DisplayMode::NormalCountdownSss => {
                             disp_mode = DisplayMode::InvertedHhMmSs;
                         }
                     }
@@ -244,8 +244,8 @@ enum MainMessage {
 enum DisplayMode {
     InvertedHhMmSs,
     NormalHhMmSs,
-    InvertedCountdownSss(chrono::DateTime),
-    NormalCountdownSss(chrono::DateTime),
+    InvertedCountdownSss,
+    NormalCountdownSss,
 }
 
 // let tt = TimeZone::ymd(2019, 12, 10).and_hms(0, 0, 0);
