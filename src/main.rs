@@ -31,7 +31,7 @@ fn main() {
     // Initialise the display device.
     // Sets parameters for the MAX7219CNG and initialises display options for
     //  the program.
-    let mut disp_mode = DisplayMode::InvertedHhMmSs;
+    let mut disp_mode = DisplayMode::InvertedCountdownSss;
     let mut display_intensity = 7; 
     display_tx.send((0x9, 0x00)).unwrap(); // Disable decode mode for all digits.
     display_tx.send((0xA, display_intensity)).unwrap();  // Set intensity.
@@ -41,8 +41,7 @@ fn main() {
 
 
 
-    let target_time = Local::now();
-
+    let mut target_time = Local.ymd(2020, 02, 10).and_hms(0, 0, 0);
 
 
     // Create a messaging channel for main event handler and clone it for each sender.
@@ -84,7 +83,7 @@ fn main() {
     for main_message in main_rx {
         match main_message {
             MainMessage::TimeSignal => {
-                disp_time(&display_tx, &disp_mode);
+                disp_time(&display_tx, &disp_mode, &target_time);
             }
             MainMessage::ButtonChange(switch, _level) => {
                 if switch == 1 {
@@ -102,7 +101,7 @@ fn main() {
                             disp_mode = DisplayMode::InvertedHhMmSs;
                         }
                     }
-                    disp_time(&display_tx, &disp_mode);
+                    disp_time(&display_tx, &disp_mode, &target_time);
                 } else {
                     display_intensity = (display_intensity + 1) % 16;
                     display_tx.send((0xA, display_intensity)).unwrap();  // Set intensity.
@@ -116,7 +115,7 @@ fn main() {
 // Function to display the current local time in hh-mm-ss format.  The digits are displayed by
 //  sending commands to the specified output queue.  The display can be inverted to deal with
 //  its orientation when installed.
-fn disp_time(display_tx: &std::sync::mpsc::Sender<(u8, u8)>, display_mode: &DisplayMode) {
+fn disp_time(display_tx: &std::sync::mpsc::Sender<(u8, u8)>, display_mode: &DisplayMode, target_time: &chrono::DateTime<Local>) {
     let dt = Local::now();
     match display_mode {
         DisplayMode::InvertedHhMmSs => {    
@@ -138,9 +137,24 @@ fn disp_time(display_tx: &std::sync::mpsc::Sender<(u8, u8)>, display_mode: &Disp
             display_tx.send((0x6, 0x1)).unwrap();
             display_tx.send((0x7, decode_digit((dt.hour() % 10) as u8, DigitOrientation::Normal, false))).unwrap();   // Low hour
             display_tx.send((0x8, decode_digit((dt.hour() / 10) as u8, DigitOrientation::Normal, false))).unwrap();   // High hour
+        },
+        DisplayMode::InvertedCountdownSss => {
+            let mut count_down = (*target_time - dt).num_seconds();
+            if count_down < 1 {
+                count_down = 0;
+            }
+            display_tx.send((0x8, decode_digit((count_down % 10) as u8, DigitOrientation::Inverted, false))).unwrap();
+            display_tx.send((0x7, decode_digit(((count_down / 10) % 10) as u8, DigitOrientation::Inverted, false))).unwrap();
+            display_tx.send((0x6, decode_digit(((count_down / 100) % 10) as u8, DigitOrientation::Inverted, false))).unwrap();
+            display_tx.send((0x5, decode_digit(((count_down / 1000) % 10) as u8, DigitOrientation::Inverted, false))).unwrap();
+            display_tx.send((0x4, decode_digit(((count_down / 10000) % 10) as u8, DigitOrientation::Inverted, false))).unwrap();
+            display_tx.send((0x3, decode_digit(((count_down / 100000) % 10) as u8, DigitOrientation::Inverted, false))).unwrap();
+            display_tx.send((0x2, decode_digit(((count_down / 1000000) % 10) as u8, DigitOrientation::Inverted, false))).unwrap();
+            display_tx.send((0x1, decode_digit(((count_down / 10000000) % 10) as u8, DigitOrientation::Inverted, false))).unwrap();
+
         }
         _ => {
-        }
+        },
     }
 }
 
