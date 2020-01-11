@@ -26,8 +26,8 @@ fn main() {
     });
 
     // Initialise the display device.
-    let mut display_inverted = true;
-    let mut display_intensity = 7; 
+    let mut display_inverted = false;
+    let mut display_intensity = 0xf; //Maximum brightness.
     display_tx.send((0x9, 0x00)).unwrap(); // Disable decode mode for all digits.
     display_tx.send((0xA, display_intensity)).unwrap();  // Set intensity.
     display_tx.send((0xB, 0x7)).unwrap();  // Set scan-limit to 0-7.
