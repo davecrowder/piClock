@@ -5,7 +5,6 @@ use std::thread::{sleep, spawn};
 use std::time::Duration;
 // use std::convert::TryInto;
 use chrono::prelude::*;
-use rouille::Request;
 
 use rppal::gpio::{Gpio, Level, Trigger};
 use rppal::spi::{Bus, Mode, SlaveSelect, Spi};
