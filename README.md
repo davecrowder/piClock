@@ -6,14 +6,14 @@
 <li>Change the orientation of the display (normal or inverted)</li>
 <li>Change the brightness of the display in incremental steps</li>
 </ul>
-<p>The program can be initiated on boot with the following entry in <code>/lib/systemd/system/piClock.service</code>:
+<p>The program can be initiated on boot with the following entry in <code>/lib/systemd/system/piClock.service</code> (ensuring that the ExecStart value is amended to point to the appropriate executable and an appropriate output file):
 <figure><pre>
 [Unit]
 Description=piClock Service
 After=multi-user.target<br>
 [Service]
 Type=idle
-ExecStart=/home/dave/projects/piClock/target/debug/piClock &>> /home/dave/piClock-daemon.output<br>
+ExecStart=/home/pi/projects/piClock/target/debug/piClock &>> /home/pi/piClock-daemon.output<br>
 [Install]
 WantedBy=multi-user.target
 </pre></figure>
